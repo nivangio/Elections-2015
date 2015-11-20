@@ -1,0 +1,43 @@
+---
+title: "Untitled"
+output: word_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(data.table)
+
+load("table processed.rda")
+
+reference.vars <- names(one.table)[1:5]
+president.vars.porc <- grep("Presidente_[0-9]+\\.porc$",names(one.table), value = T)
+
+one.table <- subset(one.table, Electores > 50)
+
+
+presidential.set <- one.table[,c(reference.vars,president.vars.porc)]
+
+drop <- apply(presidential.set[,president.vars.porc],1, function(x) all(is.na(x)))
+
+presidential.set <- presidential.set[!drop,]
+
+princomp.analysis <- princomp(presidential.set[,president.vars.porc], cor = T)
+
+
+summary(princomp.analysis)
+
+princomp.analysis$loadings
+
+pca.scores.set <- cbind(presidential.set[,reference.vars],princomp.analysis$scores)
+
+pca.scores.set <- data.table(pca.scores.set)
+
+pca.vars <- grep("Comp", names(pca.scores.set), value = T)
+
+means <- pca.scores.set[,lapply(.SD,function(x) round(mean(x),4)),by="vot_proCodigoProvincia", .SDcols = pca.vars]
+
+means
+```
